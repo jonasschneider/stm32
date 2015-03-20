@@ -85,8 +85,10 @@ ASFLAGS = $(MCFLAGS) $(DEBUG)
 # Defines to be passed to the compiler
 DEFINES = -D$(DEVICE) \
           -DVECT_TAB_OFFSET=$(FLASH_OFFSET)+$(FLASH_SIGNOFFSET) \
-          -include stm32f4xx_hal_conf.h
+          -include stm32f4xx_hal_conf.h \
 
+# TODO: please fix this (8Mhz could be the clock at startup, but who knows)
+DEFINES += -DF_CPU=8000000UL
 
 all: $(SIGNED)
 

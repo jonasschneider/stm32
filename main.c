@@ -6,7 +6,6 @@
 #include "stm32f4_discovery.h"
 #include <stm32f407xx.h>
 
-#define F_CPU           8000000UL   // 1MHz
 #define PRESCALE        64
 #define PERIOD          250 // microseconds - 1/4 second delay
 #define TCLKS           ((F_CPU/PRESCALE*PERIOD)/1000)
