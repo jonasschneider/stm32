@@ -18,6 +18,7 @@
 
 #include "VirtualWire.h"
 #include <lib/crc16.h>
+#include <string.h>
 
 #define true 1
 #define false 0
