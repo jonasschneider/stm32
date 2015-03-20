@@ -1,4 +1,4 @@
-pkgs
+pkg
 *.o
 *.d
 *.bin*

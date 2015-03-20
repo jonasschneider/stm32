@@ -4,7 +4,7 @@
 TARGET=main
 
 CC=arm-none-eabi-gcc
-LD=arm-none-eabi-ld 
+LD=arm-none-eabi-ld
 AR=arm-none-eabi-ar
 AS=arm-none-eabi-as
 CP=arm-none-eabi-objcopy
@@ -14,6 +14,8 @@ SI=./sign.py
 BIN=$(TARGET).bin
 SIGNED=$(BIN).signed
 EXECUTABLE=$(TARGET).elf
+
+HAL=pkg/STM32Cube_FW_F4_V1.5.0/Drivers/STM32F4xx_HAL_Driver
 
 DEVICE=STM32F407xx
 
@@ -42,17 +44,23 @@ SRC = $(STARTUP) \
       stm32f4xx_it.c \
       system_stm32f4xx.c \
       periph/clock.c \
-      pkgs/hal/Src/stm32f4xx_hal_rcc.c \
-      pkgs/hal/Src/stm32f4xx_hal_gpio.c \
+      $(HAL)/Src/stm32f4xx_hal_rcc.c \
+      $(HAL)/Src/stm32f4xx_hal_gpio.c \
 
+# all the packaged includes
 INC = -I./ \
+	-I$(HAL)/Inc \
+	-Ipkg/STM32Cube_FW_F4_V1.5.0/Drivers/CMSIS/Device/ST/STM32F4xx/Include \
+	-Ipkg/STM32Cube_FW_F4_V1.5.0/Drivers/CMSIS/Include \
+	-Ipkg/STM32Cube_FW_F4_V1.5.0/Drivers/BSP/STM32F4-Discovery
 
-#include Makefiles provided by epm Packages
-include pkgs/hal/Makefile
-include pkgs/cmsis/Makefile
-include pkgs/bsp-f4discovery/Makefile
+# HAL objects
+SRC += $(HAL)/Src/stm32f4xx_hal.c \
+       $(HAL)/Src/stm32f4xx_hal_cortex.c
 
-   
+# BSP objects
+SRC += pkg/STM32Cube_FW_F4_V1.5.0/Drivers/BSP/STM32F4-Discovery/stm32f4_discovery.c
+
 #  C source files
 CFILES = $(filter %.c, $(SRC))
 #  Assembly source files
@@ -75,7 +83,8 @@ ASFLAGS = $(MCFLAGS) $(DEBUG)
 
 # Defines to be passed to the compiler
 DEFINES = -D$(DEVICE) \
-          -DVECT_TAB_OFFSET=$(FLASH_OFFSET)+$(FLASH_SIGNOFFSET)
+          -DVECT_TAB_OFFSET=$(FLASH_OFFSET)+$(FLASH_SIGNOFFSET) \
+          -include stm32f4xx_hal_conf.h
 
 
 all: $(SIGNED)
@@ -102,10 +111,10 @@ clean:
 	rm -f $(OBJ) $(BIN) $(SIGNED) $(EXECUTABLE) $(COBJ:.o=.d) $(LDSCRIPT)
 
 program: $(SIGNED)
-	./stm32_flash.py $(shell realpath $^) $(FLASH_PGM) $(OPENOCD_HOST) $(OPENOCD_PORT)
-	
+	./stm32_flash.py $(realpath $<) $(FLASH_PGM) $(OPENOCD_HOST) $(OPENOCD_PORT)
+
 dfu : $(SIGNED)
-	dfu-util -s $(FLASH_PGM) -D $^  --intf 0 --alt 0 
+	dfu-util -s $(FLASH_PGM) -D $^  --intf 0 --alt 0
 
 -include  $(COBJ:.o=.d)
 
