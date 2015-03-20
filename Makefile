@@ -47,6 +47,7 @@ SRC = $(STARTUP) \
       $(HAL)/Src/stm32f4xx_hal_rcc.c \
       $(HAL)/Src/stm32f4xx_hal_gpio.c \
       VirtualWire.c \
+      arduino_compat.c \
 
 # all the packaged includes
 INC = -I./ \

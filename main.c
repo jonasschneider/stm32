@@ -7,15 +7,13 @@
 #include <stm32f407xx.h>
 
 #define PRESCALE        64
-#define PERIOD          250 // microseconds - 1/4 second delay
-#define TCLKS           ((F_CPU/PRESCALE*PERIOD)/1000)
 
-void TIM1_UP_TIM10_IRQHandler(void)
-{
-  TIM1->CNT += (65536UL-TCLKS); // reload
-  BSP_LED_Toggle(LED6);
-  TIM1->SR = ~TIM_SR_UIF;       // clear update int flag (write 0)
-}
+// void TIM1_UP_TIM10_IRQHandler(void)
+// {
+//   TIM1->CNT += (65536UL-TCLKS); // reload
+//   BSP_LED_Toggle(LED6);
+//   TIM1->SR = ~TIM_SR_UIF;       // clear update int flag (write 0)
+// }
 
 void delay(volatile uint32_t d)
 {
@@ -33,6 +31,8 @@ void delay(volatile uint32_t d)
 
 int main(void)
 {
+  SystemClock_Config();
+
 	HAL_Init();
 
 	BSP_LED_Init(LED3);
@@ -40,14 +40,18 @@ int main(void)
 	BSP_LED_Init(LED5);
 	BSP_LED_Init(LED6);
 
-  RCC->CFGR = 0;                      // HSI, 8 MHz,
+  vw_setup(2000);  // Bits per sec
 
+  // this would reset the system clock
+  //RCC->CFGR = 0;                      // HSI, 8 MHz,
+
+  // enable clock signal "flow" to the timer .. ?
   RCC->APB2ENR |= RCC_APB2ENR_TIM1EN; // enable Timer1
 
-  TIM1->PSC = PRESCALE - 1;
+  TIM1->PSC = 2048 - 1;
   TIM1->DIER = TIM_DIER_UIE;          // enable update interrupt
-  TIM1->CNT += (65536UL-TCLKS);       // initial load
-  TIM1->CR1 = TIM_CR1_CEN;            // enable timer
+  TIM1->CNT += 65536UL;       // initial load
+  TIM1->CR1 = TIM_CR1_CEN | TIM_CR1_DIR;            // enable timer
 
   //NVIC_EnableIRQ
   //NVIC->ISER[0] = (1 << TIM1_UP_TIM16_IRQn);  // enable TIM1 int in NVIC
@@ -56,8 +60,17 @@ int main(void)
 
   while (1)
   {
-    BSP_LED_Toggle(LED5);
+    BSP_LED_On(LED6);
+
+    const char msg = "Hello, world!";
+
+    vw_send((uint8_t *)msg, strlen(msg));
+    vw_wait_tx(); // Wait until the whole message is gone
+
+    BSP_LED_Off(LED6);
     delay(800000);
+    delay(800000);
+    delay(800000);delay(800000);
   }
 }
 

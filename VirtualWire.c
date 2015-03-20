@@ -16,6 +16,8 @@
 // Copyright (C) 2008 Mike McCauley
 // $Id: VirtualWire.cpp,v 1.9 2013/02/14 22:02:11 mikem Exp mikem $
 
+#include "stm32f4_discovery.h"
+
 #include "VirtualWire.h"
 #include <lib/crc16.h>
 #include <string.h>
@@ -45,8 +47,8 @@ static volatile uint8_t vw_tx_enabled = 0;
 static uint16_t vw_tx_msg_count = 0;
 
 // The digital IO pin number of the press to talk, enables the transmitter hardware
-static uint8_t vw_ptt_pin = 10;
-static uint8_t vw_ptt_inverted = 0;
+//static uint8_t vw_ptt_pin = 10;
+//static uint8_t vw_ptt_inverted = 0;
 
 // The digital IO pin number of the receiver data
 static uint8_t vw_rx_pin = 11;
@@ -146,16 +148,16 @@ void vw_set_rx_pin(uint8_t pin)
 }
 
 // Set the output pin number for transmitter PTT enable
-void vw_set_ptt_pin(uint8_t pin)
-{
-    vw_ptt_pin = pin;
-}
+// void vw_set_ptt_pin(uint8_t pin)
+// {
+//     vw_ptt_pin = pin;
+// }
 
-// Set the ptt pin inverted (low to transmit)
-void vw_set_ptt_inverted(uint8_t inverted)
-{
-    vw_ptt_inverted = inverted;
-}
+// // Set the ptt pin inverted (low to transmit)
+// void vw_set_ptt_inverted(uint8_t inverted)
+// {
+//     vw_ptt_inverted = inverted;
+// }
 
 // Called 8 times per bit period
 // Phase locked loop tries to synchronise with the transmitter so that bit
@@ -298,9 +300,9 @@ static uint8_t _timer_calc(uint16_t speed, uint16_t max_ticks, uint16_t *nticks)
 }
 
 // Speed is in bits per sec RF rate
-#if defined(__MSP430G2452__) || defined(__MSP430G2553__) // LaunchPad specific
 void vw_setup(uint16_t speed)
 {
+#if defined(__MSP430G2452__) || defined(__MSP430G2553__) // LaunchPad specific
 	// Calculate the counter overflow count based on the required bit speed
 	// and CPU clock rate
 	uint16_t ocr1a = (F_CPU / 8UL) / speed;
@@ -313,13 +315,10 @@ void vw_setup(uint16_t speed)
 	// Set up digital IO pins
 	pinMode(vw_tx_pin, OUTPUT);
 	pinMode(vw_rx_pin, INPUT);
-	pinMode(vw_ptt_pin, OUTPUT);
-	digitalWrite(vw_ptt_pin, vw_ptt_inverted);
-}
+	//pinMode(vw_ptt_pin, OUTPUT);
+	//digitalWrite(vw_ptt_pin, vw_ptt_inverted);
 
 #elif defined (ARDUINO) // Arduino specific
-void vw_setup(uint16_t speed)
-{
     uint16_t nticks; // number of prescaled ticks needed
     uint8_t prescaler; // Bit values for CS0[2:0]
 
@@ -376,11 +375,11 @@ void vw_setup(uint16_t speed)
     // Set up digital IO pins
     pinMode(vw_tx_pin, OUTPUT);
     pinMode(vw_rx_pin, INPUT);
-    pinMode(vw_ptt_pin, OUTPUT);
-    digitalWrite(vw_ptt_pin, vw_ptt_inverted);
-}
-
+    // pinMode(vw_ptt_pin, OUTPUT);
+    // digitalWrite(vw_ptt_pin, vw_ptt_inverted);
 #endif // ARDUINO
+
+}
 
 // Start the transmitter, call when the tx buffer is ready to go and vw_tx_len is
 // set to the total number of symbols to send
@@ -391,7 +390,7 @@ void vw_tx_start()
     vw_tx_sample = 0;
 
     // Enable the transmitter hardware
-    digitalWrite(vw_ptt_pin, true ^ vw_ptt_inverted);
+    //digitalWrite(vw_ptt_pin, true ^ vw_ptt_inverted);
 
     // Next tick interrupt will send the first bit
     vw_tx_enabled = true;
@@ -401,7 +400,7 @@ void vw_tx_start()
 void vw_tx_stop()
 {
     // Disable the transmitter hardware
-    digitalWrite(vw_ptt_pin, false ^ vw_ptt_inverted);
+    //digitalWrite(vw_ptt_pin, false ^ vw_ptt_inverted);
     digitalWrite(vw_tx_pin, false);
 
     // No more ticks for the transmitter
@@ -544,17 +543,14 @@ uint8_t vw_get_message(uint8_t* buf, uint8_t* len)
 // This is the interrupt service routine called when timer1 overflows
 // Its job is to output the next bit from the transmitter (every 8 calls)
 // and to call the PLL code if the receiver is enabled
-//ISR(SIG_OUTPUT_COMPARE1A)
-#if defined (ARDUINO) // Arduino specific
-
-#ifdef __AVR_ATtiny85__
-SIGNAL(TIM0_COMPA_vect)
-#else // Assume Arduino Uno (328p or similar)
-
-SIGNAL(TIMER1_COMPA_vect)
-#endif // __AVR_ATtiny85__
-
+void TIM1_UP_TIM10_IRQHandler()
 {
+    BSP_LED_Toggle(LED5);
+
+    //     TIMER_HZ = CPU_HZ/PRESCALE/RELOAD
+    // =>  RELOAD   = CPU_HZ/PRESCALE/TIMER_HZ
+    TIM1->CNT = 168000000/2048/2;
+
     if (vw_rx_enabled && 1)
 	vw_rx_sample = digitalRead(vw_rx_pin);
 
@@ -586,47 +582,6 @@ SIGNAL(TIMER1_COMPA_vect)
 
     if (vw_rx_enabled && 1)
 	vw_pll();
+
+    TIM1->SR = ~TIM_SR_UIF;       // clear update int flag (write 0)
 }
-#elif defined(__MSP430G2452__) || defined(__MSP430G2553__) // LaunchPad specific
-void vw_Int_Handler()
-{
-    if (vw_rx_enabled)
-	vw_rx_sample = digitalRead(vw_rx_pin);
-
-    // Do transmitter stuff first to reduce transmitter bit jitter due
-    // to variable receiver processing
-    if (vw_tx_enabled && vw_tx_sample++ == 0)
-    {
-    	// Send next bit
-    	// Symbols are sent LSB first
-    	// Finished sending the whole message? (after waiting one bit period
-    	// since the last bit)
-    	if (vw_tx_index >= vw_tx_len)
-    	{
-    	    vw_tx_stop();
-    	    vw_tx_msg_count++;
-    	}
-    	else
-    	{
-            digitalWrite(vw_tx_pin, vw_tx_buf[vw_tx_index] & (1 << vw_tx_bit++));
-    	    if (vw_tx_bit >= 6)
-    	    {
-    		vw_tx_bit = 0;
-    		vw_tx_index++;
-
-            }
-    	}
-    }
-    if (vw_tx_sample > 7)
-	vw_tx_sample = 0;
-
-    if (vw_rx_enabled)
-	vw_pll();
-}
-
-interrupt(TIMER0_A0_VECTOR) Timer_A_int(void)
-{
-    vw_Int_Handler();
-};
-
-#endif
