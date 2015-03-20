@@ -46,13 +46,14 @@ SRC = $(STARTUP) \
       periph/clock.c \
       $(HAL)/Src/stm32f4xx_hal_rcc.c \
       $(HAL)/Src/stm32f4xx_hal_gpio.c \
+      VirtualWire.c \
 
 # all the packaged includes
 INC = -I./ \
 	-I$(HAL)/Inc \
 	-Ipkg/STM32Cube_FW_F4_V1.5.0/Drivers/CMSIS/Device/ST/STM32F4xx/Include \
 	-Ipkg/STM32Cube_FW_F4_V1.5.0/Drivers/CMSIS/Include \
-	-Ipkg/STM32Cube_FW_F4_V1.5.0/Drivers/BSP/STM32F4-Discovery
+	-Ipkg/STM32Cube_FW_F4_V1.5.0/Drivers/BSP/STM32F4-Discovery \
 
 # HAL objects
 SRC += $(HAL)/Src/stm32f4xx_hal.c \

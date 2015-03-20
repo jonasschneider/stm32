@@ -16,21 +16,11 @@
 // Copyright (C) 2008 Mike McCauley
 // $Id: VirtualWire.cpp,v 1.9 2013/02/14 22:02:11 mikem Exp mikem $
 
-
-#if defined(ARDUINO)
- #if (ARDUINO < 100)
-  #include "WProgram.h"
- #endif
-#elif defined(__MSP430G2452__) || defined(__MSP430G2553__) // LaunchPad specific
- #include "legacymsp430.h"
- #include "Energia.h"
-#else // error
- #error Platform not defined
-#endif
-
 #include "VirtualWire.h"
-#include <util/crc16.h>
+#include <lib/crc16.h>
 
+#define true 1
+#define false 0
 
 static uint8_t vw_tx_buf[(VW_MAX_MESSAGE_LEN * 2) + VW_HEADER_LEN]
      = {0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x2a, 0x38, 0x2c};
@@ -119,11 +109,6 @@ static uint8_t symbols[] =
     0xd,  0xe,  0x13, 0x15, 0x16, 0x19, 0x1a, 0x1c,
     0x23, 0x25, 0x26, 0x29, 0x2a, 0x2c, 0x32, 0x34
 };
-
-// Cant really do this as a real C++ class, since we need to have
-// an ISR
-extern "C"
-{
 
 // Compute CRC over count bytes.
 // This should only be ever called at user level, not interrupt level
@@ -286,11 +271,11 @@ static uint8_t _timer_calc(uint16_t speed, uint16_t max_ticks, uint16_t *nticks)
     for (prescaler=1; prescaler < 7; prescaler += 1)
     {
         // Amount of time per CPU clock tick (in seconds)
-        float clock_time = (1.0 / (float(F_CPU) / float(prescalers[prescaler])));
+        float clock_time = (1.0 / (float)F_CPU / (float)prescalers[prescaler]);
         // Fraction of second needed to xmit one bit
-        float bit_time = ((1.0 / float(speed)) / 8.0);
+        float bit_time = ((1.0 / (float)speed) / 8.0);
         // number of prescaled ticks needed to handle bit time @ speed
-        ulticks = long(bit_time / clock_time);
+        ulticks = (long)(bit_time / clock_time);
         // Test if ulticks fits in nticks bitwidth (with 1-tick safety margin)
         if ((ulticks > 1) && (ulticks < max_ticks))
         {
@@ -644,6 +629,3 @@ interrupt(TIMER0_A0_VECTOR) Timer_A_int(void)
 };
 
 #endif
-
-
-}
