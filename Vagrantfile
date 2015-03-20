@@ -5,7 +5,7 @@ $script = <<SCRIPT
 set -eux
 
 sudo apt-get update
-sudo apt-get -y install build-essential gcc-arm-none-eabi gdb-arm-none-eabi
+sudo apt-get -y install build-essential gcc-arm-none-eabi gdb-arm-none-eabi openocd
 SCRIPT
 
 Vagrant.configure("2") do |config|
