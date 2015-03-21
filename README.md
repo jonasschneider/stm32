@@ -1,6 +1,4 @@
-# Quickstart for the *STM32F4 Discovery* eval board
-
-## See below for the TX/RX!
+# Quickstart for the *STM32F4 Discovery* eval board (see below for the TX/RX fun)
 
 - Get a shiny [STM32F4 Discovery](http://de.farnell.com/stmicroelectronics/stm32f4discovery/discovery-kit-stm32f407-usb-otg/dp/2009276) board.
 - Clone this repo & install [Vagrant](https://www.vagrantup.com/).
@@ -22,18 +20,18 @@
 - Connect the TX module to VCC, GND and the data pin to the STM32's `GD13`.
 - Connect the RX module to VCC & GND on the Arduino, and the data pin to the Arduino's `3` pin.
 - Program the STM32 as described above.
-- Open the Arduino serial console! You should see a bunch of `-`s and `X`s -- they stand for a received 0/1, respectively. After a while, you should see the received message like this:
+- Open the Arduino serial console! You should see a bunch of `-` and `X` -- they stand for a received 0/1, respectively. After a while, you should see the received message like this:
 
-    ----X---X--X-X-X-X-X-X-X-X-X-X-X-X-X-X-X-X-X---XXX--XX-X
-    GOT START
-    X-XX--X-X--Xlength:9 -XX-X-XX---X-X-XX-X--XX--X-XX--X-X-X-X-XX--X-X-X-X-XX---X-XXXX--X--XXX--X-XX----X-XX-XXX---XXX--
-    Got 6:H e l l o !
+        ----X---X--X-X-X-X-X-X-X-X-X-X-X-X-X-X-X-X-X---XXX--XX-X
+        GOT START
+        X-XX--X-X--Xlength:9 -XX-X-XX---X-X-XX-X--XX--X-XX--X-X-X-X-XX--X-X-X-X-XX---X-XXXX--X--XXX--X-XX----X-XX-XXX---XXX--
+        Got 6:H e l l o !
 
   Yay!
 
 More details on the hardware and wiring are available from many Arduino fans on the web, see for example [here](http://www.glacialwanderer.com/hobbyrobotics/?p=291), [here](http://forum.arduino.cc/index.php?topic=129749.15) and [here](http://vanceance.blogspot.co.at/2014/01/xy-mk-5v-arduino.html).
 
 Also, I can only recommand reading the excellent code in `VirtualWire.c` (which I adapted a tiny bit from the more or less pristine `rx/VirtualWire.cpp`). You don't need much hardware/telecomms knowledge to understand the code (I'm just a software guy, too).
-It implements an interrupt-driven asynchronous data link layer protocol using a phase-locked loop and CRC error detection for robustness against bit errors due to the shitty RF hardware.
+It implements an interrupt-driven asynchronous data link layer protocol using a phase-locked loop and CRC error detection for robustness against bit errors due to the shitty RF hardware. (None of these terms have to make sense to you beforehand.)
 
-This means that it's even better for us than just a serial link, since framing is provided for us already. All that's left is to form actual packets (e.g. using Google's [Protocol Buffers](https://github.com/google/protobuf)) and send them instead of the text.
+This means that it's even better for us than just a serial link, since framing is provided for us already. All that's left is to build actual data packets (e.g. using Google's [Protocol Buffers](https://github.com/google/protobuf)) and send them instead of the placeholder text.
