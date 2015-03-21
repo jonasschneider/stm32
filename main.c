@@ -62,15 +62,13 @@ int main(void)
   {
     BSP_LED_On(LED6);
 
-    const char msg = "Hello, world!";
-
-    vw_send((uint8_t *)msg, strlen(msg));
+    vw_send("Hello!", strlen("Hello!"));
     vw_wait_tx(); // Wait until the whole message is gone
 
     BSP_LED_Off(LED6);
-    delay(800000);
-    delay(800000);
-    delay(800000);delay(800000);
+    int i;
+    for(i = 0; i < 10;i++)
+      delay(800000);
   }
 }
 

@@ -549,7 +549,7 @@ void TIM1_UP_TIM10_IRQHandler()
 
     //     TIMER_HZ = CPU_HZ/PRESCALE/RELOAD
     // =>  RELOAD   = CPU_HZ/PRESCALE/TIMER_HZ
-    TIM1->CNT = 168000000/2048/2;
+    TIM1->CNT = 168000000/2048/(32*8);
 
     if (vw_rx_enabled && 1)
 	vw_rx_sample = digitalRead(vw_rx_pin);
@@ -558,7 +558,7 @@ void TIM1_UP_TIM10_IRQHandler()
     // to variable receiver processing
     if (vw_tx_enabled && vw_tx_sample++ == 0)
     {
-	// Send next bit
+    // Send next bit
 	// Symbols are sent LSB first
 	// Finished sending the whole message? (after waiting one bit period
 	// since the last bit)
